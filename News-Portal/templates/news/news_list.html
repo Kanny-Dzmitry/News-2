@@ -1,0 +1,65 @@
+{% extends 'default.html' %}
+{% load custom_filters %}
+
+{% block title %}Список новостей{% endblock %}
+
+{% block content %}
+    <h2>Последние новости</h2>
+    
+    <div class="actions">
+        <a href="{% url 'news:news_create' %}" class="btn btn-primary">Добавить новость</a>
+        <a href="{% url 'news:news_search' %}" class="btn btn-secondary">Поиск новостей</a>
+        <a href="{% url 'news:article_list' %}" class="btn btn-info">Перейти к статьям</a>
+    </div>
+    
+    {% if news_list %}
+        {% for news in news_list %}
+            <div class="news-item">
+                <h3 class="news-title">
+                    <a href="{% url 'news:news_detail' news.pk %}">
+                        {{ news.title|censor }}
+                    </a>
+                </h3>
+                <p class="news-date">{{ news.pub_date|date:"d.m.Y" }}</p>
+                {% if news.author %}
+                    <p class="news-author">Автор: {{ news.author.username }}</p>
+                {% endif %}
+                <div class="news-content">
+                    {{ news.content|truncatechars:20|censor }}
+                </div>
+                <div class="news-actions">
+                    <a href="{% url 'news:news_edit' news.pk %}">Редактировать</a> |
+                    <a href="{% url 'news:news_delete' news.pk %}">Удалить</a>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- Пагинация -->
+        {% if is_paginated %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; первая</a>
+                    {% if page_obj.previous_page_number > 1 %}
+                        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; предыдущая</a>
+                    {% endif %}
+                {% endif %}
+
+                <span class="current">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    {% if page_obj.next_page_number < page_obj.paginator.num_pages %}
+                        <a href="?page={{ page_obj.next_page_number }}">следующая &rsaquo;</a>
+                    {% endif %}
+                    <a href="?page={{ page_obj.paginator.num_pages }}">последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <p>Нет доступных новостей.</p>
+    {% endif %}
+{% endblock %} 

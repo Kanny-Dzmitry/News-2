@@ -1,0 +1,39 @@
+{% extends "account/base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block head_title %}{% trans "Вход" %}{% endblock %}
+
+{% block content_auth %}
+<div class="auth-form">
+    <h2>{% trans "Вход" %}</h2>
+
+    {% get_providers as socialaccount_providers %}
+
+    {% if socialaccount_providers %}
+    <p>{% trans "Войти через:" %}</p>
+    <div class="socialaccount_providers">
+        {% for provider in socialaccount_providers %}
+            <a href="{% provider_login_url provider.id process='login' %}" class="socialaccount_provider {{ provider.id }}">
+                {{ provider.name }}
+            </a>
+        {% endfor %}
+    </div>
+    <p>{% trans "или" %}</p>
+    {% endif %}
+
+    <form class="login" method="POST" action="{% url 'account_login' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if redirect_field_value %}
+        <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+        <button class="primaryAction" type="submit">{% trans "Войти" %}</button>
+        <p>
+            <a href="{% url 'account_reset_password' %}">{% trans "Забыли пароль?" %}</a>
+        </p>
+    </form>
+
+    <p>{% trans "Еще нет аккаунта?" %} <a href="{% url 'account_signup' %}">{% trans "Зарегистрироваться" %}</a></p>
+</div>
+{% endblock content_auth %} 

@@ -1,0 +1,75 @@
+{% extends 'default.html' %}
+{% load custom_filters %}
+
+{% block title %}Поиск новостей{% endblock %}
+
+{% block content %}
+    <h2>Поиск новостей</h2>
+    
+    <form action="" method="get">
+        <div class="form-group">
+            {{ filterset.form.as_p }}
+            <input type="submit" value="Найти" class="btn btn-primary" />
+        </div>
+    </form>
+    
+    <hr>
+    
+    <h3>Результаты поиска</h3>
+    
+    {% if news_list %}
+        {% for news in news_list %}
+            <div class="news-item">
+                <h3 class="news-title">
+                    <a href="{% url 'news:news_detail' news.pk %}">
+                        {{ news.title|censor }}
+                    </a>
+                </h3>
+                <p class="news-date">{{ news.pub_date|date:"d.m.Y" }}</p>
+                {% if news.author %}
+                    <p class="news-author">Автор: {{ news.author.username }}</p>
+                {% endif %}
+                <div class="news-content">
+                    {{ news.content|truncatechars:20|censor }}
+                </div>
+                <div class="news-category">
+                    Категория: 
+                    {% if news.category == 'NW' %}
+                        Новость
+                    {% else %}
+                        Статья
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+        
+        <!-- Пагинация -->
+        {% if is_paginated %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; первая</a>
+                    {% if page_obj.previous_page_number > 1 %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">&lsaquo; предыдущая</a>
+                    {% endif %}
+                {% endif %}
+
+                <span class="current">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    {% if page_obj.next_page_number < page_obj.paginator.num_pages %}
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">следующая &rsaquo;</a>
+                    {% endif %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">последняя &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+    {% else %}
+        <p>По вашему запросу ничего не найдено.</p>
+    {% endif %}
+    
+    <p><a href="{% url 'news:news_list' %}">Вернуться к списку новостей</a></p>
+{% endblock %} 

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Новостной портал{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background-color: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            color: #343a40;
+            margin: 0;
+        }
+        .news-item {
+            border-bottom: 1px solid #dee2e6;
+            padding: 15px 0;
+        }
+        .news-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .news-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .news-content {
+            margin-top: 10px;
+        }
+        .news-detail {
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .auth-form {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        .auth-form h2 {
+            margin-top: 0;
+            color: #343a40;
+        }
+        .auth-form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .auth-form button:hover {
+            background-color: #0069d9;
+        }
+        .socialaccount_providers {
+            margin: 15px 0;
+        }
+        .socialaccount_provider {
+            display: inline-block;
+            margin-right: 10px;
+            padding: 8px 12px;
+            background-color: #f1f1f1;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #333;
+        }
+        .nav-menu {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .nav-menu a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        .nav-menu a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div>
+            <h1>Новостной портал</h1>
+            <div class="nav-menu">
+                <a href="{% url 'news:news_list' %}">Новости</a>
+                <a href="{% url 'news:article_list' %}">Статьи</a>
+                <a href="{% url 'news:news_search' %}">Поиск</a>
+                {% if user.is_authenticated and perms.news.add_news %}
+                <a href="{% url 'news:news_create' %}">Добавить новость</a>
+                <a href="{% url 'news:article_create' %}">Добавить статью</a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="user-menu">
+            {% if user.is_authenticated %}
+                <span>{{ user.username }}</span>
+                <a href="{% url 'account_logout' %}">Выход</a>
+                {% if not perms.news.add_news %}
+                <a href="{% url 'news:become_author' %}">Стать автором</a>
+                {% endif %}
+            {% else %}
+                <a href="{% url 'account_login' %}">Вход</a>
+                <a href="{% url 'account_signup' %}">Регистрация</a>
+            {% endif %}
+        </div>
+    </header>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2025 Новостной портал</p>
+    </footer>
+</body>
+</html> 

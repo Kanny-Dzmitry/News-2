@@ -1,0 +1,22 @@
+{% extends 'default.html' %}
+{% load custom_filters %}
+
+{% block title %}{{ article.title|censor }}{% endblock %}
+
+{% block content %}
+    <div class="article-detail">
+        <h2>{{ article.title|censor }}</h2>
+        <p class="article-date">Дата публикации: {{ article.pub_date|date:"d.m.Y" }}</p>
+        {% if article.author %}
+            <p class="article-author">Автор: {{ article.author.username }}</p>
+        {% endif %}
+        <div class="article-content">
+            {{ article.content|censor|linebreaks }}
+        </div>
+        <div class="article-actions">
+            <a href="{% url 'news:article_edit' article.pk %}">Редактировать</a> |
+            <a href="{% url 'news:article_delete' article.pk %}">Удалить</a> |
+            <a href="{% url 'news:article_list' %}">Вернуться к списку статей</a>
+        </div>
+    </div>
+{% endblock %} 

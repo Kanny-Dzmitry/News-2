@@ -1,0 +1,27 @@
+{% extends 'default.html' %}
+
+{% block title %}
+    {% if object %}
+        Редактирование статьи
+    {% else %}
+        Создание статьи
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+    <h2>
+        {% if object %}
+            Редактирование статьи
+        {% else %}
+            Создание статьи
+        {% endif %}
+    </h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Сохранить</button>
+    </form>
+    
+    <p><a href="{% url 'news:article_list' %}">Вернуться к списку статей</a></p>
+{% endblock %} 
