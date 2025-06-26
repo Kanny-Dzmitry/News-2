@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.yandex',
+    'django_apscheduler',
     
     # Local apps
     'news',
@@ -145,6 +147,7 @@ SITE_ID = 1
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'  # Set to 'mandatory' in production
+ACCOUNT_EMAIL_REQUIRED = True  # Требуем email при регистрации
 
 # Login/logout URLs
 LOGIN_URL = '/accounts/login/'
@@ -161,3 +164,17 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
+
+# Email settings
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # В разработке используем консоль
+# В продакшене используйте настоящий SMTP сервер:
+# EMAIL_HOST = 'smtp.your-email-host.com'
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'your-email@example.com'
+# EMAIL_HOST_PASSWORD = 'your-email-password'
+# EMAIL_USE_TLS = True
+# DEFAULT_FROM_EMAIL = 'News Portal <noreply@newsportal.com>'
+
+# Настройки для django-apscheduler (еженедельная рассылка)
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"
+APSCHEDULER_RUN_NOW_TIMEOUT = 25  # Seconds

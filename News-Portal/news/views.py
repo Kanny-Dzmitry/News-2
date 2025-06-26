@@ -1,11 +1,13 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
-from django.urls import reverse_lazy
+from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.models import Group, User
 from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import View
-from .models import News
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from .models import News, Category, Subscription
 from .filters import NewsFilter
 from django import forms
 
@@ -58,9 +60,16 @@ class NewsSearch(ListView):
         return context
 
 class NewsForm(forms.ModelForm):
+    categories = forms.ModelMultipleChoiceField(
+        queryset=Category.objects.all(),
+        widget=forms.CheckboxSelectMultiple,
+        required=True,
+        label='Категории'
+    )
+    
     class Meta:
         model = News
-        fields = ['title', 'content', 'author']
+        fields = ['title', 'content', 'author', 'categories']
 
 class NewsCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = News
@@ -124,3 +133,73 @@ def become_author(request):
     if not user.groups.filter(name='authors').exists():
         user.groups.add(authors_group)
     return redirect('news:news_list')
+
+class CategoryList(ListView):
+    model = Category
+    template_name = 'news/category_list.html'
+    context_object_name = 'categories'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Добавляем информацию о подписках текущего пользователя
+        if self.request.user.is_authenticated:
+            subscribed_categories = Category.objects.filter(
+                subscriptions__user=self.request.user
+            ).values_list('id', flat=True)
+            context['subscribed_categories'] = subscribed_categories
+        return context
+
+class CategoryDetail(DetailView):
+    model = Category
+    template_name = 'news/category_detail.html'
+    context_object_name = 'category'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        category = self.get_object()
+        
+        # Добавляем список новостей и статей в этой категории
+        context['posts'] = News.objects.filter(categories=category).order_by('-pub_date')
+        
+        # Проверяем, подписан ли пользователь на эту категорию
+        if self.request.user.is_authenticated:
+            context['is_subscribed'] = Subscription.objects.filter(
+                user=self.request.user,
+                category=category
+            ).exists()
+        
+        return context
+
+@login_required
+def subscribe_category(request, pk):
+    category = get_object_or_404(Category, id=pk)
+    
+    # Проверяем, не подписан ли уже пользователь
+    subscription, created = Subscription.objects.get_or_create(
+        user=request.user,
+        category=category
+    )
+    
+    if created:
+        messages.success(request, f'Вы успешно подписались на категорию "{category.name}"')
+    else:
+        messages.info(request, f'Вы уже подписаны на категорию "{category.name}"')
+    
+    return HttpResponseRedirect(reverse('news:category_detail', args=[pk]))
+
+@login_required
+def unsubscribe_category(request, pk):
+    category = get_object_or_404(Category, id=pk)
+    
+    # Удаляем подписку, если она существует
+    deleted, _ = Subscription.objects.filter(
+        user=request.user,
+        category=category
+    ).delete()
+    
+    if deleted:
+        messages.success(request, f'Вы отписались от категории "{category.name}"')
+    else:
+        messages.info(request, f'Вы не были подписаны на категорию "{category.name}"')
+    
+    return HttpResponseRedirect(reverse('news:category_detail', args=[pk]))

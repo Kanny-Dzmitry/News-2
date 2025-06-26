@@ -106,6 +106,7 @@
             <div class="nav-menu">
                 <a href="{% url 'news:news_list' %}">Новости</a>
                 <a href="{% url 'news:article_list' %}">Статьи</a>
+                <a href="{% url 'news:category_list' %}">Категории</a>
                 <a href="{% url 'news:news_search' %}">Поиск</a>
                 {% if user.is_authenticated and perms.news.add_news %}
                 <a href="{% url 'news:news_create' %}">Добавить новость</a>

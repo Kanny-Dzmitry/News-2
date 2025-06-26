@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Еженедельная рассылка новостей: {{ category }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4a76a8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 0 0 5px 5px;
+        }
+        .post-item {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .post-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .post-date {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .post-preview {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4a76a8;
+            color: white;
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .category-badge {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 3px 10px;
+            border-radius: 15px;
+            font-size: 14px;
+            color: #555;
+            margin-top: 10px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+        .period {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Еженедельная рассылка новостей</h1>
+        <h2>Категория: {{ category }}</h2>
+    </div>
+    
+    <div class="content">
+        <p>Здравствуйте, <strong>{{ username }}</strong>!</p>
+        
+        <div class="period">
+            Новые публикации за период: <strong>{{ week_start }}</strong> - <strong>{{ week_end }}</strong>
+        </div>
+        
+        {% for post in posts %}
+            <div class="post-item">
+                <div class="post-title">{{ post.title }}</div>
+                <div class="post-date">{{ post.pub_date|date:"d.m.Y H:i" }}</div>
+                <div class="post-preview">{{ post.preview }}</div>
+                <a href="{{ post.url }}" class="button">Читать полностью</a>
+                <div>
+                    <span class="category-badge">{{ post.type }}</span>
+                </div>
+            </div>
+        {% endfor %}
+        
+        <p style="margin-top: 20px;">
+            <a href="http://127.0.0.1:8000/news/categories/{{ category.id }}/" class="button">Перейти к категории</a>
+        </p>
+    </div>
+    
+    <div class="footer">
+        <p>Вы получили это письмо, так как подписаны на категорию "{{ category }}".</p>
+        <p>Чтобы отписаться от рассылки, перейдите в <a href="http://127.0.0.1:8000/news/categories/{{ category.id }}/">настройки категории</a>.</p>
+    </div>
+</body>
+</html> 
