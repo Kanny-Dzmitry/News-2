@@ -1,10 +1,11 @@
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, m2m_changed, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import User, Group
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
+from django.core.cache import cache
 from .models import News, Category, Subscription
 from .tasks import send_notification_about_new_post
 import logging
@@ -61,4 +62,32 @@ def notify_about_new_post(sender, instance, action, pk_set, **kwargs):
             post_id=instance.id,
             category_ids=list(pk_set)
         )
-        logger.info(f'Notification task queued for post {instance.id}') 
+        logger.info(f'Notification task queued for post {instance.id}')
+
+@receiver(m2m_changed, sender=News.categories.through)
+def news_categories_changed(sender, instance, action, **kwargs):
+    """Очищаем кэш при изменении категорий новости/статьи"""
+    if action in ['post_add', 'post_remove', 'post_clear']:
+        # Очищаем кэш новости/статьи
+        cache.delete(f'news_obj_{instance.pk}')
+        
+        if instance.category == News.NEWS:
+            cache.delete('news_list_page')
+        else:
+            cache.delete('article_list_page')
+        
+        # Очищаем кэш категорий
+        for category_id in kwargs.get('pk_set', []):
+            cache.delete(f'category-{category_id}')
+
+@receiver(post_save, sender=Subscription)
+def subscription_changed(sender, instance, created, **kwargs):
+    """Очищаем кэш при изменении подписок"""
+    # Очищаем кэш категории
+    cache.delete(f'category-{instance.category.id}')
+
+@receiver(post_delete, sender=Subscription)
+def subscription_deleted(sender, instance, **kwargs):
+    """Очищаем кэш при удалении подписки"""
+    # Очищаем кэш категории
+    cache.delete(f'category-{instance.category.id}') 

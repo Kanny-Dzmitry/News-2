@@ -7,12 +7,17 @@ from django.contrib.auth.decorators import login_required
 from django.views.generic.edit import View
 from django.contrib import messages
 from django.http import HttpResponseRedirect
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views.decorators.vary import vary_on_cookie
+from django.core.cache import cache
 from .models import News, Category, Subscription
 from .filters import NewsFilter
 from django import forms
 
 # Create your views here.
 
+@method_decorator(cache_page(60), name='dispatch')  # Кэширование главной страницы на 1 минуту
 class NewsList(ListView):
     model = News
     template_name = 'news/news_list.html'
@@ -23,11 +28,18 @@ class NewsList(ListView):
         queryset = News.objects.filter(category=News.NEWS)
         return queryset
 
+@method_decorator(cache_page(300), name='dispatch')  # Кэширование страницы деталей новости на 5 минут
 class NewsDetail(DetailView):
     model = News
     template_name = 'news/news_detail.html'
     context_object_name = 'news'
+    
+    def get_object(self):
+        # Используем кэшированную модель
+        obj_id = self.kwargs.get('pk')
+        return News.get_cached_by_id(obj_id)
 
+@method_decorator(cache_page(60), name='dispatch')  # Кэширование списка статей на 1 минуту
 class ArticleList(ListView):
     model = News
     template_name = 'news/article_list.html'
@@ -38,10 +50,16 @@ class ArticleList(ListView):
         queryset = News.objects.filter(category=News.ARTICLE)
         return queryset
 
+@method_decorator(cache_page(300), name='dispatch')  # Кэширование страницы деталей статьи на 5 минут
 class ArticleDetail(DetailView):
     model = News
     template_name = 'news/article_detail.html'
     context_object_name = 'article'
+    
+    def get_object(self):
+        # Используем кэшированную модель
+        obj_id = self.kwargs.get('pk')
+        return News.get_cached_by_id(obj_id)
 
 class NewsSearch(ListView):
     model = News
@@ -80,13 +98,23 @@ class NewsCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         news = form.save(commit=False)
         news.category = News.NEWS
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Инвалидация кэша при создании новой новости
+        cache.delete('news_list_page')
+        return response
 
 class NewsEdit(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = News
     form_class = NewsForm
     template_name = 'news/news_edit.html'
     permission_required = ('news.change_news',)
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Инвалидация кэша при редактировании новости
+        cache.delete(f'news_obj_{self.object.pk}')
+        cache.delete('news_list_page')
+        return response
 
 class NewsDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = News
@@ -96,6 +124,14 @@ class NewsDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     
     def get_queryset(self):
         return News.objects.filter(category=News.NEWS)
+    
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        response = super().delete(request, *args, **kwargs)
+        # Инвалидация кэша при удалении новости
+        cache.delete(f'news_obj_{obj.pk}')
+        cache.delete('news_list_page')
+        return response
 
 class ArticleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     model = News
@@ -106,7 +142,10 @@ class ArticleCreate(LoginRequiredMixin, PermissionRequiredMixin, CreateView):
     def form_valid(self, form):
         article = form.save(commit=False)
         article.category = News.ARTICLE
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        # Инвалидация кэша при создании новой статьи
+        cache.delete('article_list_page')
+        return response
 
 class ArticleEdit(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     model = News
@@ -116,6 +155,13 @@ class ArticleEdit(LoginRequiredMixin, PermissionRequiredMixin, UpdateView):
     
     def get_queryset(self):
         return News.objects.filter(category=News.ARTICLE)
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        # Инвалидация кэша при редактировании статьи
+        cache.delete(f'news_obj_{self.object.pk}')
+        cache.delete('article_list_page')
+        return response
 
 class ArticleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     model = News
@@ -125,6 +171,14 @@ class ArticleDelete(LoginRequiredMixin, PermissionRequiredMixin, DeleteView):
     
     def get_queryset(self):
         return News.objects.filter(category=News.ARTICLE)
+    
+    def delete(self, request, *args, **kwargs):
+        obj = self.get_object()
+        response = super().delete(request, *args, **kwargs)
+        # Инвалидация кэша при удалении статьи
+        cache.delete(f'news_obj_{obj.pk}')
+        cache.delete('article_list_page')
+        return response
 
 @login_required
 def become_author(request):
@@ -134,6 +188,7 @@ def become_author(request):
         user.groups.add(authors_group)
     return redirect('news:news_list')
 
+@method_decorator(cache_page(180), name='dispatch')  # Кэширование списка категорий на 3 минуты
 class CategoryList(ListView):
     model = Category
     template_name = 'news/category_list.html'
@@ -149,6 +204,7 @@ class CategoryList(ListView):
             context['subscribed_categories'] = subscribed_categories
         return context
 
+@method_decorator(cache_page(180), name='dispatch')  # Кэширование страницы категории на 3 минуты
 class CategoryDetail(DetailView):
     model = Category
     template_name = 'news/category_detail.html'
@@ -185,6 +241,8 @@ def subscribe_category(request, pk):
     else:
         messages.info(request, f'Вы уже подписаны на категорию "{category.name}"')
     
+    # Инвалидация кэша категории при подписке
+    cache.delete(f'category-{pk}')
     return HttpResponseRedirect(reverse('news:category_detail', args=[pk]))
 
 @login_required
@@ -202,4 +260,6 @@ def unsubscribe_category(request, pk):
     else:
         messages.info(request, f'Вы не были подписаны на категорию "{category.name}"')
     
+    # Инвалидация кэша категории при отписке
+    cache.delete(f'category-{pk}')
     return HttpResponseRedirect(reverse('news:category_detail', args=[pk]))

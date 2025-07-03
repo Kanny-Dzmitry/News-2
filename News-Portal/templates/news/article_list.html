@@ -1,5 +1,6 @@
 {% extends 'default.html' %}
 {% load custom_filters %}
+{% load cache %}
 
 {% block title %}Список статей{% endblock %}
 
@@ -13,6 +14,7 @@
     </div>
     
     {% if article_list %}
+        {% cache 60 article_list_content page_obj.number %}
         {% for article in article_list %}
             <div class="article-item">
                 <h3 class="article-title">
@@ -33,6 +35,7 @@
                 </div>
             </div>
         {% endfor %}
+        {% endcache %}
         
         <!-- Пагинация -->
         {% if is_paginated %}

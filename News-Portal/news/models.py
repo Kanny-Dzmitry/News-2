@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.core.cache import cache
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name='Название категории')
@@ -90,3 +91,57 @@ class News(models.Model):
     def preview(self):
         """Возвращает первые 124 символа содержания статьи"""
         return f"{self.content[:124]}..." if len(self.content) > 124 else self.content
+    
+    def save(self, *args, **kwargs):
+        """Переопределяем метод save для автоматической очистки кэша"""
+        # Очищаем кэш при сохранении/изменении новости или статьи
+        is_new = self.pk is None
+        
+        # Сохраняем объект
+        super().save(*args, **kwargs)
+        
+        # Очищаем кэш
+        if self.category == self.NEWS:
+            cache.delete(f'news-{self.pk}')
+            cache.delete('news_list_page')
+        else:
+            cache.delete(f'article-{self.pk}')
+            cache.delete('article_list_page')
+        
+        # Очищаем кэш категорий, к которым относится новость
+        for category in self.categories.all():
+            cache.delete(f'category-{category.pk}')
+    
+    def delete(self, *args, **kwargs):
+        """Переопределяем метод delete для автоматической очистки кэша"""
+        # Сохраняем категории перед удалением
+        category_ids = list(self.categories.values_list('id', flat=True))
+        
+        # Определяем тип (новость или статья)
+        is_news = self.category == self.NEWS
+        
+        # Удаляем объект
+        result = super().delete(*args, **kwargs)
+        
+        # Очищаем кэш
+        if is_news:
+            cache.delete(f'news-{self.pk}')
+            cache.delete('news_list_page')
+        else:
+            cache.delete(f'article-{self.pk}')
+            cache.delete('article_list_page')
+        
+        # Очищаем кэш категорий
+        for category_id in category_ids:
+            cache.delete(f'category-{category_id}')
+        
+        return result
+    
+    @classmethod
+    def get_cached_by_id(cls, pk):
+        """Получает объект News из кэша или из базы данных"""
+        obj = cache.get(f'news_obj_{pk}')
+        if not obj:
+            obj = cls.objects.get(pk=pk)
+            cache.set(f'news_obj_{pk}', obj, timeout=300)  # Кэшируем на 5 минут
+        return obj

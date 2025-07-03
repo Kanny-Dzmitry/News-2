@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+{% load cache %}
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -103,6 +104,7 @@
     <header>
         <div>
             <h1>Новостной портал</h1>
+            {% cache 300 navigation %}
             <div class="nav-menu">
                 <a href="{% url 'news:news_list' %}">Новости</a>
                 <a href="{% url 'news:article_list' %}">Статьи</a>
@@ -113,7 +115,9 @@
                 <a href="{% url 'news:article_create' %}">Добавить статью</a>
                 {% endif %}
             </div>
+            {% endcache %}
         </div>
+        {% cache 300 user_menu request.user.username %}
         <div class="user-menu">
             {% if user.is_authenticated %}
                 <span>{{ user.username }}</span>
@@ -126,6 +130,7 @@
                 <a href="{% url 'account_signup' %}">Регистрация</a>
             {% endif %}
         </div>
+        {% endcache %}
     </header>
     <main>
         {% block content %}

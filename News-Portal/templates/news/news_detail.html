@@ -1,9 +1,11 @@
 {% extends 'default.html' %}
 {% load custom_filters %}
+{% load cache %}
 
 {% block title %}{{ news.title|censor }}{% endblock %}
 
 {% block content %}
+    {% cache 300 news_detail news.pk news.pub_date %}
     <div class="news-detail">
         <h2>{{ news.title|censor }}</h2>
         <p class="news-date">Дата публикации: {{ news.pub_date|date:"d.m.Y" }}</p>
@@ -19,4 +21,5 @@
             <a href="{% url 'news:news_list' %}">Вернуться к списку новостей</a>
         </div>
     </div>
+    {% endcache %}
 {% endblock %} 

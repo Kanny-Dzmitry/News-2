@@ -1,4 +1,5 @@
 {% extends 'default.html' %}
+{% load cache %}
 
 {% block title %}
 {{ category.name }} | News Portal
@@ -52,6 +53,7 @@
     
     <h2 class="mb-3">Публикации в категории</h2>
     
+    {% cache 180 category_posts category.id %}
     <div class="list-group">
         {% for post in posts %}
             <a href="{{ post.get_absolute_url }}" class="list-group-item list-group-item-action">
@@ -68,5 +70,6 @@
             </div>
         {% endfor %}
     </div>
+    {% endcache %}
 </div>
 {% endblock content %} 

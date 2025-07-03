@@ -61,6 +61,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    
+    'django.middleware.cache.UpdateCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = 'NewsPortal.urls'
@@ -81,6 +85,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'NewsPortal.wsgi.application'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': os.path.join(BASE_DIR, 'cache_files'),
+    }
+}
 
 
 # Database
@@ -186,3 +197,149 @@ CELERY_ACCEPT_CONTENT = ['application/json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# Настройки логирования
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    
+    # Фильтры для логирования
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+    
+    # Форматировщики логов
+    'formatters': {
+        # Для консоли: время, уровень, сообщение
+        'console_basic': {
+            'format': '%(asctime)s %(levelname)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Для консоли с путем (для WARNING и выше)
+        'console_warning': {
+            'format': '%(asctime)s %(levelname)s: %(pathname)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Для general.log: время, уровень, модуль, сообщение
+        'general_log': {
+            'format': '%(asctime)s %(levelname)s: %(module)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Для errors.log: время, уровень, сообщение, путь, стек ошибки
+        'errors_log': {
+            'format': '%(asctime)s %(levelname)s: %(message)s\nPath: %(pathname)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Для security.log: время, уровень, модуль, сообщение
+        'security_log': {
+            'format': '%(asctime)s %(levelname)s: %(module)s: %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        # Для email: время, уровень, сообщение, путь
+        'mail_formatter': {
+            'format': '%(asctime)s %(levelname)s: %(message)s\nPath: %(pathname)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+    },
+    
+    # Обработчики логов
+    'handlers': {
+        # Вывод в консоль для DEBUG и выше (только при DEBUG=True)
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'console_basic',
+        },
+        # Вывод в консоль для WARNING и выше с путем (только при DEBUG=True)
+        'console_warning': {
+            'level': 'WARNING',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'console_warning',
+        },
+        # Вывод в консоль для ERROR и выше с выводом стека ошибки (только при DEBUG=True)
+        'console_error': {
+            'level': 'ERROR',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'console_warning',
+            'exc_info': True,
+        },
+        # Вывод в general.log (только при DEBUG=False)
+        'general_file': {
+            'level': 'INFO',
+            'filters': ['require_debug_false'],
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'general.log'),
+            'formatter': 'general_log',
+        },
+        # Вывод в errors.log
+        'errors_file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'errors.log'),
+            'formatter': 'errors_log',
+            'exc_info': True,
+        },
+        # Вывод в security.log
+        'security_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'security.log'),
+            'formatter': 'security_log',
+        },
+        # Отправка на email (только при DEBUG=False)
+        'mail_admins': {
+            'level': 'ERROR',
+            'filters': ['require_debug_false'],
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'mail_formatter',
+        },
+    },
+    
+    # Логгеры
+    'loggers': {
+        # Основной логгер Django
+        'django': {
+            'handlers': ['console', 'console_warning', 'console_error', 'general_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        # Логгер для ошибок запросов
+        'django.request': {
+            'handlers': ['errors_file', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Логгер для ошибок сервера
+        'django.server': {
+            'handlers': ['errors_file', 'mail_admins'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Логгер для ошибок шаблонов
+        'django.template': {
+            'handlers': ['errors_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Логгер для ошибок базы данных
+        'django.db.backends': {
+            'handlers': ['errors_file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        # Логгер для безопасности
+        'django.security': {
+            'handlers': ['security_file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

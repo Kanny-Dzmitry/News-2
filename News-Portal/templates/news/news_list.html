@@ -1,5 +1,6 @@
 {% extends 'default.html' %}
 {% load custom_filters %}
+{% load cache %}
 
 {% block title %}Список новостей{% endblock %}
 
@@ -13,6 +14,7 @@
     </div>
     
     {% if news_list %}
+        {% cache 60 news_list_content page_obj.number %}
         {% for news in news_list %}
             <div class="news-item">
                 <h3 class="news-title">
@@ -33,6 +35,7 @@
                 </div>
             </div>
         {% endfor %}
+        {% endcache %}
         
         <!-- Пагинация -->
         {% if is_paginated %}
