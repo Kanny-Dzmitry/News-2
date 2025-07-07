@@ -3,6 +3,9 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.urls import reverse
 from django.core.cache import cache
+from django.conf import settings
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 class Category(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name='Название категории')
@@ -145,3 +148,42 @@ class News(models.Model):
             obj = cls.objects.get(pk=pk)
             cache.set(f'news_obj_{pk}', obj, timeout=300)  # Кэшируем на 5 минут
         return obj
+
+
+class UserProfile(models.Model):
+    """Профиль пользователя с дополнительными настройками"""
+    user = models.OneToOneField(
+        User, 
+        on_delete=models.CASCADE,
+        related_name='profile',
+        verbose_name='Пользователь'
+    )
+    timezone = models.CharField(
+        max_length=50,
+        choices=settings.TIMEZONE_FIELD_CHOICES if hasattr(settings, 'TIMEZONE_FIELD_CHOICES') else [('UTC', 'UTC')],
+        default='UTC',
+        verbose_name='Часовой пояс'
+    )
+    
+    class Meta:
+        verbose_name = 'Профиль пользователя'
+        verbose_name_plural = 'Профили пользователей'
+    
+    def __str__(self):
+        return f'Профиль {self.user.username}'
+
+
+@receiver(post_save, sender=User)
+def create_user_profile(sender, instance, created, **kwargs):
+    """Автоматически создаем профиль пользователя при регистрации"""
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+@receiver(post_save, sender=User)
+def save_user_profile(sender, instance, **kwargs):
+    """Сохраняем профиль пользователя при обновлении"""
+    if hasattr(instance, 'profile'):
+        instance.profile.save()
+    else:
+        UserProfile.objects.create(user=instance)

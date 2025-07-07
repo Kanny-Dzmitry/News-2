@@ -6,7 +6,7 @@ from .views import (
     ArticleCreate, ArticleEdit, ArticleDelete,
     CategoryList, CategoryDetail,
     subscribe_category, unsubscribe_category,
-    become_author
+    become_author, timezone_settings, user_profile
 )
 
 app_name = 'news'
@@ -35,4 +35,6 @@ urlpatterns = [
     
     # Профиль
     path('become-author/', become_author, name='become_author'),
+    path('timezone-settings/', timezone_settings, name='timezone_settings'),
+    path('profile/', user_profile, name='user_profile'),
 ] 

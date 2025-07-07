@@ -1,21 +1,22 @@
 {% extends 'default.html' %}
 {% load custom_filters %}
+{% load i18n %}
 
-{% block title %}Поиск новостей{% endblock %}
+{% block title %}{% trans "Поиск новостей" %}{% endblock %}
 
 {% block content %}
-    <h2>Поиск новостей</h2>
+    <h2>{% trans "Поиск новостей" %}</h2>
     
     <form action="" method="get">
         <div class="form-group">
             {{ filterset.form.as_p }}
-            <input type="submit" value="Найти" class="btn btn-primary" />
+            <input type="submit" value="{% trans 'Найти' %}" class="btn btn-primary" />
         </div>
     </form>
     
     <hr>
     
-    <h3>Результаты поиска</h3>
+    <h3>{% trans "Результаты поиска" %}</h3>
     
     {% if news_list %}
         {% for news in news_list %}
@@ -27,17 +28,17 @@
                 </h3>
                 <p class="news-date">{{ news.pub_date|date:"d.m.Y" }}</p>
                 {% if news.author %}
-                    <p class="news-author">Автор: {{ news.author.username }}</p>
+                    <p class="news-author">{% trans "Автор" %}: {{ news.author.username }}</p>
                 {% endif %}
                 <div class="news-content">
                     {{ news.content|truncatechars:20|censor }}
                 </div>
                 <div class="news-category">
-                    Категория: 
+                    {% trans "Категория" %}: 
                     {% if news.category == 'NW' %}
-                        Новость
+                        {% trans "Новость" %}
                     {% else %}
-                        Статья
+                        {% trans "Статья" %}
                     {% endif %}
                 </div>
             </div>
@@ -48,28 +49,28 @@
         <div class="pagination">
             <span class="step-links">
                 {% if page_obj.has_previous %}
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; первая</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">&laquo; {% trans "первая" %}</a>
                     {% if page_obj.previous_page_number > 1 %}
-                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">&lsaquo; предыдущая</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">&lsaquo; {% trans "предыдущая" %}</a>
                     {% endif %}
                 {% endif %}
 
                 <span class="current">
-                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
+                    {% trans "Страница" %} {{ page_obj.number }} {% trans "из" %} {{ page_obj.paginator.num_pages }}.
                 </span>
 
                 {% if page_obj.has_next %}
                     {% if page_obj.next_page_number < page_obj.paginator.num_pages %}
-                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">следующая &rsaquo;</a>
+                        <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">{% trans "следующая" %} &rsaquo;</a>
                     {% endif %}
-                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">последняя &raquo;</a>
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">{% trans "последняя" %} &raquo;</a>
                 {% endif %}
             </span>
         </div>
         {% endif %}
     {% else %}
-        <p>По вашему запросу ничего не найдено.</p>
+        <p>{% trans "По вашему запросу ничего не найдено." %}</p>
     {% endif %}
     
-    <p><a href="{% url 'news:news_list' %}">Вернуться к списку новостей</a></p>
+    <p><a href="{% url 'news:news_list' %}">{% trans "Вернуться к списку новостей" %}</a></p>
 {% endblock %} 

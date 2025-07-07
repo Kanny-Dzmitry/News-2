@@ -1,47 +1,57 @@
 {% extends 'default.html' %}
+{% load custom_filters %}
+{% load i18n %}
 
-{% block title %}
-Категории | News Portal
-{% endblock title %}
+{% block title %}{% trans "Список категорий" %}{% endblock %}
 
 {% block content %}
-<div class="container mt-3">
-    <h1 class="mb-4">Категории новостей</h1>
+    <h2>{% trans "Категории новостей" %}</h2>
     
-    <p class="lead">
-        Здесь вы можете просмотреть все доступные категории новостей и статей, а также подписаться на интересующие вас категории.
-    </p>
-    
-    <div class="row row-cols-1 row-cols-md-3 g-4 mt-3">
-        {% for category in categories %}
-            <div class="col">
-                <div class="card h-100">
-                    <div class="card-body">
-                        <h5 class="card-title">{{ category.name }}</h5>
-                        <p class="card-text">
-                            Количество публикаций: {{ category.news.count }}
-                        </p>
-                    </div>
-                    <div class="card-footer">
-                        <a href="{% url 'news:category_detail' category.id %}" class="btn btn-primary">Просмотреть</a>
-                        
-                        {% if user.is_authenticated %}
-                            {% if category.id in subscribed_categories %}
-                                <a href="{% url 'news:unsubscribe_category' category.id %}" class="btn btn-outline-danger">Отписаться</a>
-                            {% else %}
-                                <a href="{% url 'news:subscribe_category' category.id %}" class="btn btn-outline-success">Подписаться</a>
-                            {% endif %}
-                        {% endif %}
-                    </div>
+    {% if category_list %}
+        {% for category in category_list %}
+            <div class="news-item">
+                <h3 class="news-title">
+                    <a href="{% url 'news:category_detail' category.pk %}">
+                        {{ category.name }}
+                    </a>
+                </h3>
+                <div class="news-content">
+                    {{ category.description|censor }}
                 </div>
-            </div>
-        {% empty %}
-            <div class="col-12">
-                <div class="alert alert-info">
-                    Категории пока не добавлены.
+                <div class="news-actions">
+                    <a href="{% url 'news:category_detail' category.pk %}">{% trans "Просмотреть новости" %}</a>
                 </div>
             </div>
         {% endfor %}
-    </div>
-</div>
-{% endblock content %} 
+        
+        <!-- Пагинация -->
+        {% if is_paginated %}
+        <div class="pagination">
+            <span class="step-links">
+                {% if page_obj.has_previous %}
+                    <a href="?page=1">&laquo; {% trans "первая" %}</a>
+                    {% if page_obj.previous_page_number > 1 %}
+                        <a href="?page={{ page_obj.previous_page_number }}">&lsaquo; {% trans "предыдущая" %}</a>
+                    {% endif %}
+                {% endif %}
+
+                <span class="current">
+                    {% trans "Страница" %} {{ page_obj.number }} {% trans "из" %} {{ page_obj.paginator.num_pages }}.
+                </span>
+
+                {% if page_obj.has_next %}
+                    {% if page_obj.next_page_number < page_obj.paginator.num_pages %}
+                        <a href="?page={{ page_obj.next_page_number }}">{% trans "следующая" %} &rsaquo;</a>
+                    {% endif %}
+                    <a href="?page={{ page_obj.paginator.num_pages }}">{% trans "последняя" %} &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+        {% endif %}
+        
+    {% else %}
+        <p>{% trans "Нет доступных категорий." %}</p>
+    {% endif %}
+    
+    <p><a href="{% url 'news:news_list' %}">{% trans "Вернуться к списку новостей" %}</a></p>
+{% endblock %} 

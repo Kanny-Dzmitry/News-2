@@ -1,0 +1,86 @@
+{% extends 'default.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-clock"></i> Настройка часового пояса
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="timezone-selector">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                {{ form.timezone.label_tag }}
+                                {{ form.timezone }}
+                                {% if form.timezone.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {{ form.timezone.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="timezone-info">
+                                <p><strong>Текущее время:</strong> {{ current_time|date:"d.m.Y H:i" }}</p>
+                                <p><strong>Ваш часовой пояс:</strong> {{ user_timezone }}</p>
+                                {% if current_hour %}
+                                    <p><strong>Текущий час:</strong> {{ current_hour }}:00</p>
+                                {% endif %}
+                                {% if is_dark_theme %}
+                                    <p class="text-info"><i class="fas fa-moon"></i> Сейчас используется тёмная тема ({{ current_hour }}:00 - ночное время)</p>
+                                {% else %}
+                                    <p class="text-warning"><i class="fas fa-sun"></i> Сейчас используется светлая тема ({{ current_hour }}:00 - дневное время)</p>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <a href="{% url 'news:news_list' %}" class="btn btn-secondary me-md-2">
+                                    <i class="fas fa-arrow-left"></i> Назад
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Сохранить
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Информация о темах
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-warning">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-sun fa-3x text-warning mb-3"></i>
+                                    <h5>Светлая тема</h5>
+                                    <p class="text-muted">Активна с 06:00 до 18:00</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-info">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-moon fa-3x text-info mb-3"></i>
+                                    <h5>Тёмная тема</h5>
+                                    <p class="text-muted">Активна с 18:00 до 06:00</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

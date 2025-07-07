@@ -17,10 +17,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView
+from django.conf.urls.i18n import i18n_patterns
 
+# API endpoints без локализации
 urlpatterns = [
+    path('api/', include('news.api_urls')),
     path('admin/', admin.site.urls),
+    path('i18n/', include('django.conf.urls.i18n')),
+] + i18n_patterns(
     path('news/', include('news.urls')),
     path('accounts/', include('allauth.urls')),
     path('', RedirectView.as_view(url='/news/', permanent=True)),
-]
+    prefix_default_language=False,
+)

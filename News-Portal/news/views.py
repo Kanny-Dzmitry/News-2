@@ -11,8 +11,9 @@ from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from django.views.decorators.vary import vary_on_cookie
 from django.core.cache import cache
-from .models import News, Category, Subscription
+from .models import News, Category, Subscription, UserProfile
 from .filters import NewsFilter
+from .forms import TimezoneForm, UserProfileForm
 from django import forms
 
 # Create your views here.
@@ -263,3 +264,43 @@ def unsubscribe_category(request, pk):
     # Инвалидация кэша категории при отписке
     cache.delete(f'category-{pk}')
     return HttpResponseRedirect(reverse('news:category_detail', args=[pk]))
+
+
+@login_required
+def timezone_settings(request):
+    """Представление для настройки часового пояса пользователя"""
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        form = TimezoneForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Часовой пояс успешно обновлен!')
+            return redirect('news:timezone_settings')
+    else:
+        form = TimezoneForm(instance=profile)
+    
+    return render(request, 'news/timezone_settings.html', {'form': form})
+
+
+@login_required
+def user_profile(request):
+    """Представление для редактирования профиля пользователя"""
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        profile = UserProfile.objects.create(user=request.user)
+    
+    if request.method == 'POST':
+        form = UserProfileForm(request.POST, instance=profile, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Профиль успешно обновлен!')
+            return redirect('news:user_profile')
+    else:
+        form = UserProfileForm(instance=profile, user=request.user)
+    
+    return render(request, 'news/user_profile.html', {'form': form})

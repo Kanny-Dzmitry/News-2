@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'allauth.socialaccount',
     'allauth.socialaccount.providers.yandex',
     'django_apscheduler',
+    'rest_framework',
     
     # Local apps
     'news',
@@ -61,6 +62,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'allauth.account.middleware.AccountMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
+    'news.middleware.TimezoneMiddleware',
     
     'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
@@ -68,6 +71,10 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'NewsPortal.urls'
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale')
+]
 
 TEMPLATES = [
     {
@@ -79,6 +86,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'news.context_processors.theme_context',
             ],
         },
     },
@@ -127,19 +135,43 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'ru'
+
+LANGUAGES = [
+    ('ru', 'Русский'),
+    ('en', 'English'),
+]
 
 TIME_ZONE = 'UTC'
 
 USE_I18N = True
+USE_L10N = True
 
 USE_TZ = True
+
+# Поддержка часовых поясов
+TIMEZONE_FIELD_CHOICES = [
+    ('Europe/Moscow', 'Москва'),
+    ('Europe/London', 'Лондон'),
+    ('America/New_York', 'Нью-Йорк'),
+    ('America/Chicago', 'Чикаго'),
+    ('America/Denver', 'Денвер'),
+    ('America/Los_Angeles', 'Лос-Анджелес'),
+    ('Asia/Tokyo', 'Токио'),
+    ('Asia/Shanghai', 'Шанхай'),
+    ('Asia/Dubai', 'Дубай'),
+    ('Australia/Sydney', 'Сидней'),
+    ('UTC', 'UTC'),
+]
 
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -198,8 +230,8 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
-# Настройки логирования
-LOGGING = {
+# Настройки логирования (временно отключены)
+LOGGING_DISABLED = {
     'version': 1,
     'disable_existing_loggers': False,
     
@@ -342,4 +374,15 @@ LOGGING = {
             'propagate': False,
         },
     },
+}
+
+# Настройки REST Framework
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticatedOrReadOnly',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
 }

@@ -1,16 +1,15 @@
 {% extends 'default.html' %}
-{% load custom_filters %}
+{% load i18n %}
 
-{% block title %}Удаление новости{% endblock %}
+{% block title %}{% trans "Удалить новость" %}{% endblock %}
 
 {% block content %}
-    <h2>Удаление новости</h2>
-    
-    <p>Вы действительно хотите удалить новость "{{ object.title|censor }}"?</p>
+    <h2>{% trans "Удалить новость" %}</h2>
     
     <form method="post">
         {% csrf_token %}
-        <button type="submit" class="btn btn-danger">Удалить</button>
-        <a href="{% url 'news:news_detail' object.pk %}" class="btn btn-secondary">Отмена</a>
+        <p>{% trans "Вы уверены, что хотите удалить новость" %} "{{ object.title }}"?</p>
+        <input type="submit" value="{% trans 'Удалить' %}" class="btn btn-danger" />
+        <a href="{% url 'news:news_list' %}" class="btn btn-secondary">{% trans "Отмена" %}</a>
     </form>
 {% endblock %} 

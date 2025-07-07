@@ -1,0 +1,89 @@
+{% extends 'default.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">
+                        <i class="fas fa-user"></i> Профиль пользователя
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.first_name.label_tag }}
+                                    {{ form.first_name }}
+                                    {% if form.first_name.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.first_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.last_name.label_tag }}
+                                    {{ form.last_name }}
+                                    {% if form.last_name.errors %}
+                                        <div class="alert alert-danger mt-2">
+                                            {{ form.last_name.errors }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.email.label_tag }}
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ form.email.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.timezone.label_tag }}
+                            {{ form.timezone }}
+                            {% if form.timezone.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    {{ form.timezone.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="timezone-info">
+                            <p><strong>Текущее время:</strong> {{ current_time|date:"d.m.Y H:i" }}</p>
+                            <p><strong>Ваш часовой пояс:</strong> {{ user_timezone }}</p>
+                            {% if current_hour %}
+                                <p><strong>Текущий час:</strong> {{ current_hour }}:00</p>
+                            {% endif %}
+                            {% if is_dark_theme %}
+                                <p class="text-info"><i class="fas fa-moon"></i> Сейчас используется тёмная тема ({{ current_hour }}:00 - ночное время)</p>
+                            {% else %}
+                                <p class="text-warning"><i class="fas fa-sun"></i> Сейчас используется светлая тема ({{ current_hour }}:00 - дневное время)</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'news:news_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="fas fa-arrow-left"></i> Назад
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Сохранить
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
